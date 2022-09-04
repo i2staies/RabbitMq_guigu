@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:rabbit="http://www.springframework.org/schema/rabbit"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://www.springframework.org/schema/context
+       https://www.springframework.org/schema/context/spring-context.xsd
+       http://www.springframework.org/schema/rabbit
+       http://www.springframework.org/schema/rabbit/spring-rabbit.xsd">
+
+    <!--加载配置文件-->
+    <context:property-placeholder location="classpath:rabbitmq.properties"/>
+
+    <!-- 定义rabbitmq connectionFactory -->
+    <rabbit:connection-factory id="connectionFactory"
+                               host="${rabbitmq.host}"
+                               port="${rabbitmq.port}"
+                               username="${rabbitmq.username}"
+                               password="${rabbitmq.password}"
+                               virtual-host="${rabbitmq.virtual-host}"/>
+
+    <!--定义管理器， 用于管理交换机、队列-->
+    <rabbit:admin connection-factory="connectionFactory"/><!--先连接工厂-->
+
+    <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~简单模式~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
+    <!--
+        声明队列
+        id是在spring中容器的唯一标识，而name才是队列名称
+        auto-declare="true" 自动声明，队列不存在时创建
+
+        简单模式绑定的是默认的交换机，类型为direct，名称为""，路由key为队列名
+    -->
+    <rabbit:queue id="spring_simple_queue" name="spring_simple_queue" auto-declare="true"/>
+
+
+    <!--存放rabbitTemplate对象到spring容器当中，用于发送消息，可直接在-->
+    <rabbit:template id="rabbitTemplate" connection-factory="connectionFactory"/>
+
+    <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~工作队列模式~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
+    <!--声明队列-->
+    <!--工作队列模式绑定的是默认的交换机，类型为direct，名称为""，路由key为队列名-->
+    <rabbit:queue id="spring_work_queue" name="spring_work_queue" auto-declare="true"/>
+
+    <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~发布订阅模式~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
+    <!--声明队列-->
+    <rabbit:queue id="spring_fanout_queue1" name="spring_work_queue1" auto-declare="true"/>
+    <rabbit:queue id="spring_fanout_queue2" name="spring_work_queue2" auto-declare="true"/>
+
+    <!--声明交换机-->
+    <rabbit:fanout-exchange name="spring_fanout_exchange" auto-declare="true">
+        <!--绑定队列-->
+        <rabbit:bindings>
+            <!--queue：指向的是队列对象在spring容器中的唯一标识-->
+            <rabbit:binding queue="spring_fanout_queue1"/>
+            <rabbit:binding queue="spring_fanout_queue2"/>
+        </rabbit:bindings>
+    </rabbit:fanout-exchange>
+
+    <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~路由模式~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
+    <!--声明队列-->
+    <rabbit:queue id="spring_direct_queue1" name="spring_direct_queue1" auto-declare="true"/>
+    <rabbit:queue id="spring_direct_queue2" name="spring_direct_queue2" auto-declare="true"/>
+
+    <!--声明direct交换机-->
+    <rabbit:direct-exchange name="spring_direct_exchange" auto-declare="true">
+        <!--绑定队列-->
+        <rabbit:bindings>
+            <!--queue：指向的是队列对象在spring容器中的唯一标识-->
+            <rabbit:binding queue="spring_fanout_queue1" key="error"/>
+            <rabbit:binding queue="spring_fanout_queue2" key="info"/>
+            <rabbit:binding queue="spring_fanout_queue2" key="error"/>
+            <rabbit:binding queue="spring_fanout_queue2" key="warning"/>
+        </rabbit:bindings>
+    </rabbit:direct-exchange>
+
+    <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~通配符模式~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
+    <!--声明队列-->
+    <rabbit:queue id="spring_topic_queue1" name="spring_topic_queue1" auto-declare="true"/>
+    <rabbit:queue id="spring_topic_queue2" name="spring_topic_queue2" auto-declare="true"/>
+
+    <!--声明topic交换机-->
+    <rabbit:topic-exchange name="spring_topic_exchange" auto-declare="true">
+        <!--绑定队列-->
+        <rabbit:bindings>
+            <!--queue：指向的是队列对象在spring容器中的唯一标识-->
+            <rabbit:binding queue="spring_topic_queue1" pattern="*.orange.*"/>
+            <rabbit:binding queue="spring_topic_queue2" pattern="*.*.rabbit"/>
+            <rabbit:binding queue="spring_topic_queue2" pattern="lazy.#"/>
+        </rabbit:bindings>
+    </rabbit:topic-exchange>
+
+
+</beans>
