@@ -24,8 +24,15 @@
                                password="${rabbitmq.password}"
                                virtual-host="${rabbitmq.virtual-host}"/>
 
-   <!--监听器容器，用于管理所有的监听器（消费者）-->
-    <rabbit:listener-container connection-factory="connectionFactory" auto-declare="true">
+    <!--监听器容器，用于管理所有的监听器（消费者）-->
+    <!--默认处理方式，根据异常自动处理,出现异常，消息会返回给队列并发送给其他消费者，没有其他消费者就会无限循环-->
+<!--    <rabbit:listener-container connection-factory="connectionFactory" acknowledge="auto" auto-declare="true">-->
+
+    <!--手动确认：则需要在业务处理成功后，调用channel.basicAck()，手动签收，如果出现异常，则调用channel.basicNack()方法，让其自动重新发送消息。-->
+<!--    <rabbit:listener-container connection-factory="connectionFactory" acknowledge="manual" auto-declare="true">-->
+
+<!--    自动确认：业务处理出现异常，那么该消息就会丢失。-->
+    <rabbit:listener-container connection-factory="connectionFactory" acknowledge="none" auto-declare="true">
         <!--
             监听器，对消费者来说不管是什么模式，只需要监听所需要监听的队列即可
                 ref:监听器对象在sprng容器中的唯一标识(自己创建的监听器对象，加入到IOC容器当中)

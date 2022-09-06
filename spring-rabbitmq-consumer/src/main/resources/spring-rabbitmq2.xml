@@ -32,29 +32,27 @@
 <!--    <rabbit:listener-container connection-factory="connectionFactory" acknowledge="manual" auto-declare="true">-->
 
 <!--    自动确认：业务处理出现异常，那么该消息就会丢失。-->
-    <rabbit:listener-container connection-factory="connectionFactory" acknowledge="none" auto-declare="true">
+
+    <!--
+        acknowledge="manual" 手动确认
+        prefetch=5 限流，消费者每次只接收5条消息，确认之后在取下一条消息
+    -->
+    <rabbit:listener-container connection-factory="connectionFactory" acknowledge="manual" auto-declare="true" prefetch="5">
         <!--
             监听器，对消费者来说不管是什么模式，只需要监听所需要监听的队列即可
                 ref:监听器对象在sprng容器中的唯一标识(自己创建的监听器对象，加入到IOC容器当中)
                 queue-name：队列名
         -->
-        <rabbit:listener ref="simpleListener" queue-names="spring_simple_queue"></rabbit:listener>
+        <!--<rabbit:listener ref="simpleListener" queue-names="spring_simple_queue"></rabbit:listener>-->
 
-        <rabbit:listener ref="workListener1" queue-names="spring_work_queue1"></rabbit:listener>
-        <rabbit:listener ref="workListener2" queue-names="spring_work_queue2"></rabbit:listener>
+        <!--确认消息的监听器-->
+        <!--<rabbit:listener ref="ackListener" queue-names="spring_simple_queue"></rabbit:listener>-->
 
-        <!--用于发布订阅模式-->
-        <rabbit:listener ref="fanoutListener1" queue-names="spring_fonout_queue1"></rabbit:listener>
-        <rabbit:listener ref="fanoutListener2" queue-names="spring_fonout_queue2"></rabbit:listener>
+        <!--拒绝确认的监听器-->
+        <!--<rabbit:listener ref="nackListener2" queue-names="spring_normal_queue1"></rabbit:listener>-->
 
-        <!--用于路由模式-->
-        <rabbit:listener ref="topicListener1" queue-names="spring_direct_queue1"></rabbit:listener>
-        <rabbit:listener ref="directListener2" queue-names="spring_direct_queue2"></rabbit:listener>
-
-        <!--用于路由模式-->
-        <rabbit:listener ref="topicListener1" queue-names="spring_topic_queue1"></rabbit:listener>
-        <rabbit:listener ref="topicListener2" queue-names="spring_topic_queue2"></rabbit:listener>
-
+        <!--死信队列的消费者-->
+        <rabbit:listener ref="deadListener" queue-names="spring_dead_queue1"></rabbit:listener>
 
     </rabbit:listener-container>
 </beans>

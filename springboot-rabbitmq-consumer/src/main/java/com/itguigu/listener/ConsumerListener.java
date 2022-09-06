@@ -1,20 +1,15 @@
-package com.itguigu.listener.simple;
-
+package com.itguigu.listener;
 
 import org.springframework.amqp.core.Message;
-import org.springframework.amqp.core.MessageListener;
+import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Controller;
 
-/**
- * 监听器（消费者）
- * 自动确认：需要实现的接口为MessageListener
- */
 @Component
-public class SimpleListener implements MessageListener {
-
-    @Override
-    public void onMessage(Message message) {
-        System.out.println("消息内容："+new String(message.getBody()));
+public class ConsumerListener {
+    @RabbitListener(queues = "boot_direct_queue")
+    public void getMessage(Message message){
+        System.out.println("C1接收的消息内容："+new String(message.getBody()));
         System.out.println("交换机名称："+message.getMessageProperties().getReceivedExchange());
         System.out.println("路由key：" + message.getMessageProperties().getReceivedRoutingKey());
         System.out.println("队列名：" + message.getMessageProperties().getConsumerQueue());

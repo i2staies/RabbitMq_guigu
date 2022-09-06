@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:rabbit="http://www.springframework.org/schema/rabbit"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://www.springframework.org/schema/context
+       https://www.springframework.org/schema/context/spring-context.xsd
+       http://www.springframework.org/schema/rabbit
+       http://www.springframework.org/schema/rabbit/spring-rabbit.xsd">
+
+    <!--加载配置文件-->
+    <context:property-placeholder location="classpath:rabbitmq.properties"/>
+
+    <!-- 定义rabbitmq connectionFactory -->
+    <rabbit:connection-factory id="connectionFactory"
+                               host="${rabbitmq.host}"
+                               port="${rabbitmq.port}"
+                               username="${rabbitmq.username}"
+                               password="${rabbitmq.password}"
+                               virtual-host="${rabbitmq.virtual-host}"
+    />
+
+    <!--定义管理器， 用于管理交换机、队列-->
+    <rabbit:admin connection-factory="connectionFactory"/><!--先连接工厂-->
+
+
+    <!--存放rabbitTemplate对象到spring容器当中，用于发送消息-->
+    <rabbit:template id="rabbitTemplate" connection-factory="connectionFactory"/>
+
+
+    <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~简单模式~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
+    <!--声明普通队列-->
+    <rabbit:queue id="spring_normal_queue1" name="spring_normal_queue1" auto-declare="true">
+        <!--设置参数-->
+        <rabbit:queue-arguments>
+            <!--（过期时间）-->
+            <!--<entry key="x-message-ttl" value="10000" value-type="java.lang.Integer"></entry>-->
+
+            <!--最大消息数量-->
+           <!-- <entry key="x-max-length" value="10" value-type="java.lang.Integer"></entry>-->
+
+            <!--发送到的死信交换机的名称是谁-->
+            <entry key="x-dead-letter-exchange" value="spring_dead_exchange"></entry>
+
+            <!--发送消息到死信交换机时携带的路由key-->
+            <entry key="x-dead-letter-routing-key" value="dead_key"></entry>
+        </rabbit:queue-arguments>
+    </rabbit:queue>
+
+    <!--声明普通交换机-->
+    <rabbit:direct-exchange name="spring_normal_exchange" auto-declare="true">
+        <!--绑定普通队列-->
+        <rabbit:bindings>
+            <rabbit:binding queue="spring_normal_queue1" key="normal_key"></rabbit:binding>
+        </rabbit:bindings>
+    </rabbit:direct-exchange>
+
+    <!--声明死信队列-->
+    <rabbit:queue id="spring_dead_queue1" name="spring_dead_queue1" auto-declare="true"/>
+
+    <!--声明死信交换机-->
+    <rabbit:direct-exchange name="spring_dead_exchange" auto-declare="true">
+        <!--绑定死信队列-->
+        <rabbit:bindings>
+            <rabbit:binding queue="spring_dead_queue1" key="dead_key"></rabbit:binding>
+        </rabbit:bindings>
+    </rabbit:direct-exchange>
+
+
+    </beans>
